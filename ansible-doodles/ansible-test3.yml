@@ -1,0 +1,27 @@
+---
+- name: ansible-test3
+  hosts: GNS3
+  gather_facts: true
+  connection: local
+  
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      
+  tasks:
+    - name: change host name
+      ios_config:
+        lines: hostname Router_{{ inventory_hostname }}
+        provider: "{{ cli }}"
+
+      register: output
+      
+    - name: output
+      debug:
+        var: output
+        
+#    - name: copy output to file
+#      copy: content="{{ output }}" dest=./output/{{ inventory_hostname }}.txt
+      

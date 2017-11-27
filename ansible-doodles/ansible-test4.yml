@@ -1,0 +1,41 @@
+---
+- name: ansible-test4
+  hosts: GNS3
+  gather_facts: true
+  connection: local
+  
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      
+  tasks:
+    - name: create access list
+      ios_config:
+        lines: 
+          - 10 permit ip 192.168.2.0 0.0.0.255 any
+          - 20 deny ip any any
+        parents: ip access-list extended permit-mgmt
+        #before: no ip access-list extended permit-mgmt
+        match: exact
+        provider: "{{ cli }}"
+
+      register: output
+      
+    - name: output
+      debug:
+        var: output
+
+    - name: add to interface
+      ios_config:
+        lines:
+          - desc Management interface
+          - ip access-group permit-mgmt in
+        parents: interface FastEthernet 2/1
+        match: exact
+        provider: "{{ cli }}"
+        
+#    - name: copy output to file
+#      copy: content="{{ output }}" dest=./output/{{ inventory_hostname }}.txt
+      

@@ -1,0 +1,128 @@
+---
+- name: all routers config
+  hosts: ALL
+  gather_facts: false
+  connection: local
+  
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      
+  tasks:
+    - name: management config
+      ios_config:
+        lines: 
+          - ip domain-name test.com
+          - ip ssh version 2
+          - no ip domain-lookup
+          - logging host 192.168.2.1
+        provider: "{{ cli }}"
+
+      register: output
+
+#      debug:
+#        var: output
+
+    - name: ACL
+      ios_config:
+        lines: 
+          - 10 permit ip 192.168.2.0 0.0.0.255 any
+          - 20 deny ip any any
+        parents: ip access-list extended permit-mgmt
+        #before: no ip access-list extended permit-mgmt
+        match: exact
+        provider: "{{ cli }}"
+
+      register: output
+
+#      debug:
+#        var: output
+
+    - name: add to interface
+      ios_config:
+        lines:
+          - desc Management interface
+          - ip access-group permit-mgmt in
+        parents: interface FastEthernet 2/1
+        match: exact
+        provider: "{{ cli }}"
+
+    - name:  ACL2
+      ios_config:
+        lines:
+          - 10 permit 192.168.2.0 0.0.0.255
+          - 20 deny any
+        parents: ip access-list standard 10
+        provider: "{{ cli }}"
+
+      register: output
+
+#      debug:
+#        var: output
+
+    - name: snmp config
+      ios_config:
+        lines:
+          - snmp-server host 192.168.2.1 version 2c traps
+          - snmp-server community readonly RO 10
+        provider: "{{ cli }}"
+
+      register: output
+
+#      debug:
+#        var: output
+
+- name: core routers config
+  hosts: CORE
+  gather_facts: false
+  connection: local
+  
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      
+  tasks:
+    - name: create VRF
+      ios_config:
+        lines: 
+          - rd 65000:1
+        parents: ip vrf Production
+        provider: "{{ cli }}"
+
+      register: output
+
+   #   debug:
+   #     var: output
+
+    - name: Intra-core link
+      ios_config:
+        lines: 
+          - desc Intra-core 
+          - ip vrf forwarding Production
+          - ip address 172.16.1.{{ inventory_hostname|last }} 255.255.255.252
+          - no shut 
+        parents: interface fa0/0
+        #before: no ip access-list extended permit-mgmt
+        match: exact
+        provider: "{{ cli }}"
+
+      register: output
+
+#    - debug:
+#        var: output
+
+    - name: Distribution link
+      ios_config:
+        lines:
+          - desc Distribution
+          - ip vrf forwarding Production
+          - ip address 172.16.2.{{ 4*{{ inventory_hostname|last|int }}+1 }} 255.255.255.252
+          - no shut
+        parents: interface fa1/0
+        provider: "{{ cli }}"
+
+      register: output

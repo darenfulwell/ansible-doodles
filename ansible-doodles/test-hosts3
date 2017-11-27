@@ -1,0 +1,11 @@
+[ALL]
+R1
+R2
+R3
+
+[CORE]
+R1
+R2
+
+[DIST]
+R3

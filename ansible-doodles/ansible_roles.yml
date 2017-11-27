@@ -1,0 +1,18 @@
+---
+- name: ansible-roles-3850
+  hosts: "3850"
+  gather_facts: false
+  connection: local
+  
+  roles:
+    - GC-switches
+    - "3850"
+
+- name: ansible-roles-2960
+  hosts: "2960"
+  gather_facts: false
+  connection: local
+
+  roles:
+    - GC-switches
+    - "2960"

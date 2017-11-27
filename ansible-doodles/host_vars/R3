@@ -1,0 +1,4 @@
+---
+ansible_host: R3
+ansible_user: cisco
+ansible_password: cisco123
